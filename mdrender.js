@@ -6,6 +6,7 @@ const { marked } = require('marked');
 const hljs = require('highlight.js');
 const { exec } = require('child_process');
 const os = require('os');
+const http = require('http');
 
 // Configure marked with syntax highlighting
 marked.setOptions({
@@ -199,8 +200,11 @@ hr {
 `;
 
 function showUsage() {
-  console.log('Usage: mdrender <markdown-file>');
+  console.log('Usage: mdrender <markdown-file> [options]');
   console.log('Example: mdrender README.md');
+  console.log('Options:');
+  console.log('  --serve [port]    Serve file on local network (default port: 3000)');
+  console.log('  --watch          Auto-reload on file changes (requires --serve)');
   process.exit(1);
 }
 
@@ -215,29 +219,93 @@ function openInBrowser(filePath) {
   });
 }
 
-function main() {
+function openInBrowserWithTabReuse(filePath, mdFile) {
+  // Create a unique window name based on the markdown file path
+  const windowName = `mdrender_${path.resolve(mdFile).replace(/[^a-zA-Z0-9]/g, '_')}`;
+  
+  if (process.platform === 'darwin') {
+    // macOS: Use AppleScript to reuse the same tab
+    const script = `
+tell application "System Events"
+    set frontApp to name of first application process whose frontmost is true
+end tell
+
+tell application "Safari"
+    activate
+    set foundTab to false
+    repeat with w in windows
+        repeat with t in tabs of w
+            if name of t contains "${path.basename(mdFile)}" then
+                set current tab of w to t
+                set URL of t to "${filePath}"
+                set foundTab to true
+                exit repeat
+            end if
+        end repeat
+        if foundTab then exit repeat
+    end repeat
+    
+    if not foundTab then
+        tell window 1
+            set current tab to (make new tab with properties {URL:"${filePath}"})
+        end tell
+    end if
+end tell
+
+tell application frontApp
+    activate
+end tell
+`;
+    
+    exec(`osascript -e '${script.replace(/'/g, "\\'")}'`, (error) => {
+      if (error) {
+        console.log('AppleScript failed, falling back to regular open');
+        openInBrowser(filePath);
+      }
+    });
+  } else {
+    // For non-macOS, fall back to regular browser opening
+    // Note: Tab reuse is more complex on Linux/Windows and depends on the browser
+    openInBrowser(filePath);
+  }
+}
+
+function parseArgs() {
   const args = process.argv.slice(2);
+  const options = {
+    serve: false,
+    port: 3000,
+    watch: false,
+    file: null
+  };
   
-  if (args.length !== 1) {
-    showUsage();
+  for (let i = 0; i < args.length; i++) {
+    const arg = args[i];
+    
+    if (arg === '--serve') {
+      options.serve = true;
+      if (i + 1 < args.length && !args[i + 1].startsWith('--')) {
+        const port = parseInt(args[i + 1]);
+        if (!isNaN(port)) {
+          options.port = port;
+          i++;
+        }
+      }
+    } else if (arg === '--watch') {
+      options.watch = true;
+    } else if (!arg.startsWith('--') && !options.file) {
+      options.file = arg;
+    }
   }
   
-  const mdFile = args[0];
+  return options;
+}
+
+function generateHTML(mdFile) {
+  const markdownContent = fs.readFileSync(mdFile, 'utf8');
+  const htmlContent = marked(markdownContent);
   
-  if (!fs.existsSync(mdFile)) {
-    console.error(`Error: File '${mdFile}' not found`);
-    process.exit(1);
-  }
-  
-  try {
-    // Read markdown file
-    const markdownContent = fs.readFileSync(mdFile, 'utf8');
-    
-    // Convert to HTML
-    const htmlContent = marked(markdownContent);
-    
-    // Create complete HTML document
-    const fullHTML = `
+  const fullHTML = `
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -248,21 +316,142 @@ function main() {
 </head>
 <body>
     ${htmlContent}
+    <script>
+      // Tab reuse functionality
+      const fileId = '${path.resolve(mdFile).replace(/\\/g, '\\\\')}';
+      
+      // Check if this file is already open in another tab
+      if (localStorage.getItem('mdrender_current_file') === fileId) {
+        // Close any other tabs with the same file
+        localStorage.setItem('mdrender_close_signal', fileId + '_' + Date.now());
+      }
+      
+      // Set this tab as the current one for this file
+      localStorage.setItem('mdrender_current_file', fileId);
+      
+      // Listen for close signals
+      window.addEventListener('storage', (e) => {
+        if (e.key === 'mdrender_close_signal') {
+          const [signalFileId, timestamp] = e.newValue.split('_');
+          if (signalFileId === fileId && Date.now() - parseInt(timestamp) < 1000) {
+            window.close();
+          }
+        }
+      });
+      
+      // Auto-reload script for watch mode
+      if (window.location.search.includes('watch=true')) {
+        let lastModified = null;
+        
+        async function checkForUpdates() {
+          try {
+            const response = await fetch('/api/modified');
+            const data = await response.json();
+            
+            if (lastModified && data.modified !== lastModified) {
+              window.location.reload();
+            }
+            lastModified = data.modified;
+          } catch (error) {
+            console.log('Auto-reload check failed:', error);
+          }
+        }
+        
+        // Check for updates every 1 second
+        setInterval(checkForUpdates, 1000);
+        checkForUpdates();
+      }
+    </script>
 </body>
 </html>
 `;
+  
+  return fullHTML;
+}
+
+function serveFile(mdFile, port, watch) {
+  let htmlContent = generateHTML(mdFile);
+  
+  const server = http.createServer((req, res) => {
+    if (req.url === '/' || req.url === '/index.html') {
+      // Regenerate HTML if watch mode is enabled
+      if (watch) {
+        try {
+          htmlContent = generateHTML(mdFile);
+        } catch (error) {
+          console.error('Error regenerating HTML:', error.message);
+        }
+      }
+      res.writeHead(200, { 'Content-Type': 'text/html' });
+      res.end(htmlContent);
+    } else if (req.url === '/api/modified' && watch) {
+      // API endpoint for checking file modification time
+      try {
+        const stats = fs.statSync(mdFile);
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ modified: stats.mtime.getTime() }));
+      } catch (error) {
+        res.writeHead(500, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'File not found' }));
+      }
+    } else {
+      res.writeHead(404, { 'Content-Type': 'text/plain' });
+      res.end('Not Found');
+    }
+  });
+  
+  server.listen(port, () => {
+    const watchParam = watch ? '?watch=true' : '';
+    const url = `http://localhost:${port}${watchParam}`;
+    console.log(`Serving ${mdFile} at ${url}`);
+    if (watch) {
+      console.log('Auto-reload enabled - file changes will refresh the browser');
+    }
+    console.log('Press Ctrl+C to stop the server');
     
-    // Create temporary HTML file
-    const tempDir = os.tmpdir();
-    const htmlFile = path.join(tempDir, `${path.basename(mdFile, '.md')}.html`);
-    
-    fs.writeFileSync(htmlFile, fullHTML);
-    
-    console.log(`Rendered ${mdFile} -> ${htmlFile}`);
-    console.log('Opening in browser...');
-    
-    // Open in browser
-    openInBrowser(htmlFile);
+    // Open in browser with tab reuse
+    openInBrowserWithTabReuse(url, mdFile);
+  });
+  
+  return server;
+}
+
+function main() {
+  const options = parseArgs();
+  
+  if (!options.file) {
+    showUsage();
+  }
+  
+  const mdFile = options.file;
+  
+  if (!fs.existsSync(mdFile)) {
+    console.error(`Error: File '${mdFile}' not found`);
+    process.exit(1);
+  }
+  
+  try {
+    if (options.serve) {
+      // Serve mode
+      if (options.watch && !options.serve) {
+        console.error('--watch requires --serve option');
+        process.exit(1);
+      }
+      serveFile(mdFile, options.port, options.watch);
+    } else {
+      // File mode (original behavior)
+      const fullHTML = generateHTML(mdFile);
+      const tempDir = os.tmpdir();
+      const htmlFile = path.join(tempDir, `${path.basename(mdFile, '.md')}.html`);
+      
+      fs.writeFileSync(htmlFile, fullHTML);
+      
+      console.log(`Rendered ${mdFile} -> ${htmlFile}`);
+      console.log('Opening in browser...');
+      
+      // Open in browser with tab reuse
+      openInBrowserWithTabReuse(htmlFile, mdFile);
+    }
     
   } catch (error) {
     console.error('Error processing file:', error.message);

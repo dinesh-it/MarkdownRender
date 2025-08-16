@@ -11,6 +11,9 @@ A lightweight command-line tool that converts Markdown files to HTML and opens t
 - ✅ Cross-platform support (macOS, Linux, Windows)
 - ✅ Temporary file cleanup
 - ✅ Standalone binaries available (no Node.js required)
+- ✅ **Server mode** - Serve files on local network
+- ✅ **Auto-reload** - Live updates when files change
+- ✅ **Smart tab management** - Reuses tabs for same files
 
 ## Installation
 
@@ -84,10 +87,10 @@ Binaries will be created in the `dist/` directory.
 
 ### Basic Usage
 ```bash
-mdrender filename.md
+mdrender filename.md [options]
 ```
 
-### Examples
+### File Mode (Default)
 ```bash
 # Render a README file
 mdrender README.md
@@ -99,13 +102,42 @@ mdrender docs/getting-started.md
 mdrender /path/to/document.md
 ```
 
+### Server Mode
+```bash
+# Serve on default port (3000)
+mdrender README.md --serve
+
+# Serve on custom port
+mdrender README.md --serve 8080
+
+# Serve with auto-reload on file changes
+mdrender README.md --serve 3000 --watch
+
+# Access from other devices on network
+mdrender README.md --serve 3000
+# Then visit http://YOUR_IP:3000 from any device
+```
+
+### Options
+- `--serve [port]` - Serve file on HTTP server (default port: 3000)
+- `--watch` - Auto-reload browser when file changes (requires --serve)
+
 ## How It Works
 
+### File Mode (Default)
 1. Reads your markdown file
 2. Converts it to HTML using GitHub Flavored Markdown
 3. Applies GitHub-like CSS styling
 4. Creates a temporary HTML file
 5. Opens it in your default browser
+
+### Server Mode
+1. Reads your markdown file
+2. Converts it to HTML with GitHub-like styling
+3. Starts a local HTTP server
+4. Serves the content at `http://localhost:PORT`
+5. Opens browser to the server URL
+6. **With --watch**: Monitors file changes and auto-reloads browser
 
 ## Dependencies
 
@@ -121,6 +153,21 @@ Unlike terminal-based markdown viewers (`glow`, `mdcat`, etc.), MdRender renders
 - Print or save as PDF
 - Use browser zoom and search
 - Get the full GitHub reading experience
+
+### Server Mode Benefits
+
+- **Network sharing**: Access your docs from any device on the network
+- **Live editing**: See changes instantly with `--watch` mode
+- **No file pollution**: No temporary files cluttering your system
+- **Development workflow**: Perfect for documentation while coding
+- **Presentation mode**: Share docs with teammates via local network
+
+### Smart Features
+
+- **Tab management**: Automatically reuses browser tabs for the same file
+- **Auto-reload**: Real-time updates when files change (server mode)
+- **Cross-platform**: Works on macOS, Linux, and Windows
+- **No dependencies**: Standalone binaries require no Node.js installation
 
 ## License
 
