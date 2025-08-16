@@ -14,6 +14,7 @@ A lightweight command-line tool that converts Markdown files to HTML and opens t
 - ✅ **Server mode** - Serve files on local network
 - ✅ **Auto-reload** - Live updates when files change
 - ✅ **Smart tab management** - Reuses tabs for same files
+- ✅ **Dark/Light mode** - System default with manual toggle
 
 ## Installation
 
@@ -122,6 +123,12 @@ mdrender README.md --serve 3000
 - `--serve [port]` - Serve file on HTTP server (default port: 3000)
 - `--watch` - Auto-reload browser when file changes (requires --serve)
 
+### Theme Switching
+- **🌙 Dark Mode**: Click the moon icon in the top-right corner
+- **☀️ Light Mode**: Click the sun icon to switch back
+- **System Default**: Automatically detects your OS theme preference
+- **Persistent**: Your choice is saved across sessions
+
 ## How It Works
 
 ### File Mode (Default)
@@ -166,6 +173,8 @@ Unlike terminal-based markdown viewers (`glow`, `mdcat`, etc.), MdRender renders
 
 - **Tab management**: Automatically reuses browser tabs for the same file
 - **Auto-reload**: Real-time updates when files change (server mode)
+- **Dark/Light themes**: System default detection with manual toggle
+- **GitHub-accurate**: Perfect recreation of GitHub's light and dark themes
 - **Cross-platform**: Works on macOS, Linux, and Windows
 - **No dependencies**: Standalone binaries require no Node.js installation
 

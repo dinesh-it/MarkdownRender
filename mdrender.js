@@ -23,9 +23,104 @@ marked.setOptions({
   gfm: true
 });
 
-// GitHub-like CSS
+// GitHub-like CSS with dark/light theme support
 const githubCSS = `
 <style>
+:root {
+  /* Light theme (default) */
+  --bg-color: #ffffff;
+  --text-color: #24292f;
+  --text-muted: #656d76;
+  --border-color: #d0d7de;
+  --border-muted: #d8dee4;
+  --bg-subtle: #f6f8fa;
+  --bg-overlay: rgba(175,184,193,0.2);
+  --accent-color: #0969da;
+  --accent-hover: #0550ae;
+  
+  /* Code highlighting */
+  --code-bg: #f6f8fa;
+  --code-text: #24292f;
+  --hl-keyword: #d73a49;
+  --hl-title: #6f42c1;
+  --hl-attr: #005cc5;
+  --hl-string: #032f62;
+  --hl-builtin: #e36209;
+  --hl-comment: #6a737d;
+  --hl-name: #22863a;
+}
+
+/* Dark theme */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg-color: #0d1117;
+    --text-color: #f0f6fc;
+    --text-muted: #8b949e;
+    --border-color: #30363d;
+    --border-muted: #21262d;
+    --bg-subtle: #161b22;
+    --bg-overlay: rgba(110,118,129,0.2);
+    --accent-color: #58a6ff;
+    --accent-hover: #388bfd;
+    
+    /* Code highlighting - dark theme */
+    --code-bg: #161b22;
+    --code-text: #f0f6fc;
+    --hl-keyword: #ff7b72;
+    --hl-title: #d2a8ff;
+    --hl-attr: #79c0ff;
+    --hl-string: #a5f3fc;
+    --hl-builtin: #ffa657;
+    --hl-comment: #8b949e;
+    --hl-name: #7ee787;
+  }
+}
+
+/* Manual theme overrides */
+[data-theme="light"] {
+  --bg-color: #ffffff;
+  --text-color: #24292f;
+  --text-muted: #656d76;
+  --border-color: #d0d7de;
+  --border-muted: #d8dee4;
+  --bg-subtle: #f6f8fa;
+  --bg-overlay: rgba(175,184,193,0.2);
+  --accent-color: #0969da;
+  --accent-hover: #0550ae;
+  
+  --code-bg: #f6f8fa;
+  --code-text: #24292f;
+  --hl-keyword: #d73a49;
+  --hl-title: #6f42c1;
+  --hl-attr: #005cc5;
+  --hl-string: #032f62;
+  --hl-builtin: #e36209;
+  --hl-comment: #6a737d;
+  --hl-name: #22863a;
+}
+
+[data-theme="dark"] {
+  --bg-color: #0d1117;
+  --text-color: #f0f6fc;
+  --text-muted: #8b949e;
+  --border-color: #30363d;
+  --border-muted: #21262d;
+  --bg-subtle: #161b22;
+  --bg-overlay: rgba(110,118,129,0.2);
+  --accent-color: #58a6ff;
+  --accent-hover: #388bfd;
+  
+  --code-bg: #161b22;
+  --code-text: #f0f6fc;
+  --hl-keyword: #ff7b72;
+  --hl-title: #d2a8ff;
+  --hl-attr: #79c0ff;
+  --hl-string: #a5f3fc;
+  --hl-builtin: #ffa657;
+  --hl-comment: #8b949e;
+  --hl-name: #7ee787;
+}
+
 body {
   box-sizing: border-box;
   min-width: 200px;
@@ -35,8 +130,9 @@ body {
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans", Helvetica, Arial, sans-serif;
   font-size: 16px;
   line-height: 1.5;
-  color: #24292f;
-  background-color: #ffffff;
+  color: var(--text-color);
+  background-color: var(--bg-color);
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 h1, h2, h3, h4, h5, h6 {
@@ -44,21 +140,22 @@ h1, h2, h3, h4, h5, h6 {
   margin-bottom: 16px;
   font-weight: 600;
   line-height: 1.25;
+  color: var(--text-color);
 }
 
-h1 { font-size: 2em; border-bottom: 1px solid #d0d7de; padding-bottom: 0.3em; }
-h2 { font-size: 1.5em; border-bottom: 1px solid #d0d7de; padding-bottom: 0.3em; }
+h1 { font-size: 2em; border-bottom: 1px solid var(--border-color); padding-bottom: 0.3em; }
+h2 { font-size: 1.5em; border-bottom: 1px solid var(--border-color); padding-bottom: 0.3em; }
 h3 { font-size: 1.25em; }
 h4 { font-size: 1em; }
 h5 { font-size: 0.875em; }
-h6 { font-size: 0.85em; color: #656d76; }
+h6 { font-size: 0.85em; color: var(--text-muted); }
 
 p { margin-top: 0; margin-bottom: 16px; }
 
 blockquote {
   padding: 0 1em;
-  color: #656d76;
-  border-left: 0.25em solid #d0d7de;
+  color: var(--text-muted);
+  border-left: 0.25em solid var(--border-color);
   margin: 0 0 16px 0;
 }
 
@@ -70,9 +167,10 @@ code {
   margin: 0;
   font-size: 85%;
   white-space: break-spaces;
-  background-color: rgba(175,184,193,0.2);
+  background-color: var(--bg-overlay);
   border-radius: 6px;
   font-family: ui-monospace, SFMono-Regular, "SF Mono", Consolas, "Liberation Mono", Menlo, monospace;
+  color: var(--text-color);
 }
 
 pre {
@@ -80,9 +178,10 @@ pre {
   overflow: auto;
   font-size: 85%;
   line-height: 1.45;
-  background-color: #f6f8fa;
+  background-color: var(--code-bg);
   border-radius: 6px;
   margin-bottom: 16px;
+  color: var(--code-text);
 }
 
 pre code {
@@ -94,6 +193,7 @@ pre code {
   word-wrap: normal;
   background-color: transparent;
   border: 0;
+  color: inherit;
 }
 
 table {
@@ -108,39 +208,41 @@ table {
 
 table th, table td {
   padding: 6px 13px;
-  border: 1px solid #d0d7de;
+  border: 1px solid var(--border-color);
+  color: var(--text-color);
 }
 
 table th {
   font-weight: 600;
-  background-color: #f6f8fa;
+  background-color: var(--bg-subtle);
 }
 
 table tr:nth-child(2n) {
-  background-color: #f6f8fa;
+  background-color: var(--bg-subtle);
 }
 
 a {
-  color: #0969da;
+  color: var(--accent-color);
   text-decoration: none;
 }
 
 a:hover {
   text-decoration: underline;
+  color: var(--accent-hover);
 }
 
 hr {
   height: 0.25em;
   padding: 0;
   margin: 24px 0;
-  background-color: #d0d7de;
+  background-color: var(--border-color);
   border: 0;
 }
 
-/* Highlight.js GitHub theme */
+/* Highlight.js GitHub theme with theme support */
 .hljs {
-  color: #24292f;
-  background: #f6f8fa;
+  color: var(--code-text);
+  background: var(--code-bg);
 }
 
 .hljs-doctag,
@@ -150,14 +252,14 @@ hr {
 .hljs-template-variable,
 .hljs-type,
 .hljs-variable.language_ {
-  color: #d73a49;
+  color: var(--hl-keyword);
 }
 
 .hljs-title,
 .hljs-title.class_,
 .hljs-title.class_.inherited__,
 .hljs-title.function_ {
-  color: #6f42c1;
+  color: var(--hl-title);
 }
 
 .hljs-attr,
@@ -170,31 +272,56 @@ hr {
 .hljs-selector-class,
 .hljs-selector-id,
 .hljs-variable {
-  color: #005cc5;
+  color: var(--hl-attr);
 }
 
 .hljs-string,
 .hljs-meta .hljs-string,
 .hljs-regexp {
-  color: #032f62;
+  color: var(--hl-string);
 }
 
 .hljs-built_in,
 .hljs-symbol {
-  color: #e36209;
+  color: var(--hl-builtin);
 }
 
 .hljs-code,
 .hljs-comment,
 .hljs-formula {
-  color: #6a737d;
+  color: var(--hl-comment);
 }
 
 .hljs-name,
 .hljs-quote,
 .hljs-selector-tag,
 .hljs-selector-pseudo {
-  color: #22863a;
+  color: var(--hl-name);
+}
+
+/* Theme toggle button */
+.theme-toggle {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  background: var(--bg-subtle);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  padding: 8px 12px;
+  font-size: 14px;
+  cursor: pointer;
+  color: var(--text-color);
+  z-index: 1000;
+  transition: all 0.3s ease;
+  user-select: none;
+}
+
+.theme-toggle:hover {
+  background: var(--border-color);
+}
+
+.theme-toggle:active {
+  transform: scale(0.95);
 }
 </style>
 `;
@@ -315,8 +442,52 @@ function generateHTML(mdFile) {
     ${githubCSS}
 </head>
 <body>
+    <div class="theme-toggle" onclick="toggleTheme()">
+      <span id="theme-icon">🌙</span> <span id="theme-text">Dark</span>
+    </div>
     ${htmlContent}
     <script>
+      // Theme management
+      function getPreferredTheme() {
+        const saved = localStorage.getItem('mdrender_theme');
+        if (saved) return saved;
+        return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+      }
+      
+      function setTheme(theme) {
+        document.documentElement.setAttribute('data-theme', theme);
+        localStorage.setItem('mdrender_theme', theme);
+        updateThemeToggle(theme);
+      }
+      
+      function updateThemeToggle(theme) {
+        const icon = document.getElementById('theme-icon');
+        const text = document.getElementById('theme-text');
+        if (theme === 'dark') {
+          icon.textContent = '☀️';
+          text.textContent = 'Light';
+        } else {
+          icon.textContent = '🌙';
+          text.textContent = 'Dark';
+        }
+      }
+      
+      function toggleTheme() {
+        const current = document.documentElement.getAttribute('data-theme') || getPreferredTheme();
+        const newTheme = current === 'dark' ? 'light' : 'dark';
+        setTheme(newTheme);
+      }
+      
+      // Initialize theme
+      setTheme(getPreferredTheme());
+      
+      // Listen for system theme changes
+      window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
+        if (!localStorage.getItem('mdrender_theme')) {
+          setTheme(e.matches ? 'dark' : 'light');
+        }
+      });
+      
       // Tab reuse functionality
       const fileId = '${path.resolve(mdFile).replace(/\\/g, '\\\\')}';
       
