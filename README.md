@@ -24,13 +24,24 @@ No Node.js required! Download the binary for your platform:
 
 Make it executable and run:
 ```bash
-# macOS/Linux
+# macOS (if blocked by security)
+xattr -d com.apple.quarantine mdrender-macos
 chmod +x mdrender-macos
 ./mdrender-macos README.md
+
+# Linux
+chmod +x mdrender-linux
+./mdrender-linux README.md
 
 # Windows
 mdrender-win.exe README.md
 ```
+
+**macOS Security Note**: If macOS blocks the binary with "cannot verify developer", run:
+```bash
+xattr -d com.apple.quarantine mdrender-macos
+```
+Alternatively, go to System Preferences → Security & Privacy → General and click "Allow Anyway".
 
 ### Option 2: Install from Source
 
