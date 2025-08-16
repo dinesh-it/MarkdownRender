@@ -7,13 +7,35 @@
     "mdrender": "./mdrender.js"
   },
   "dependencies": {
-    "marked": "^14.1.2",
-    "highlight.js": "^11.9.0"
+    "highlight.js": "^11.9.0",
+    "marked": "^14.1.2"
   },
   "scripts": {
-    "install-global": "npm link"
+    "install-global": "npm link",
+    "build": "pkg . --out-path dist",
+    "build:all": "pkg . --targets node18-macos-x64,node18-linux-x64,node18-win-x64 --out-path dist"
   },
-  "keywords": ["markdown", "html", "renderer", "browser"],
+  "pkg": {
+    "scripts": [
+      "mdrender.js"
+    ],
+    "assets": [],
+    "targets": [
+      "node18-macos-x64",
+      "node18-linux-x64", 
+      "node18-win-x64"
+    ],
+    "outputPath": "dist"
+  },
+  "keywords": [
+    "markdown",
+    "html",
+    "renderer",
+    "browser"
+  ],
   "author": "",
-  "license": "MIT"
+  "license": "MIT",
+  "devDependencies": {
+    "pkg": "^5.8.1"
+  }
 }

@@ -1,0 +1,141 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+            platform: linux
+            arch: x64
+            target: node18-linux-x64
+            artifact: mdrender-linux
+          - os: macos-latest
+            platform: macos
+            arch: x64
+            target: node18-macos-x64
+            artifact: mdrender-macos
+          - os: windows-latest
+            platform: win
+            arch: x64
+            target: node18-win-x64
+            artifact: mdrender-win.exe
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build binary
+        run: npx pkg . --targets ${{ matrix.target }} --out-path dist
+
+      - name: Rename binary (Unix)
+        if: matrix.platform != 'win'
+        run: mv dist/mdrender ${{ matrix.artifact }}
+
+      - name: Rename binary (Windows)
+        if: matrix.platform == 'win'
+        run: mv dist/mdrender.exe ${{ matrix.artifact }}
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.artifact }}
+          path: ${{ matrix.artifact }}
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: ./artifacts
+
+      - name: Extract version from tag
+        id: version
+        run: echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref_name }}
+          release_name: Release ${{ github.ref_name }}
+          body: |
+            ## MdRender ${{ steps.version.outputs.VERSION }}
+            
+            ### Downloads
+            - **Linux**: [mdrender-linux](https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/mdrender-linux)
+            - **macOS**: [mdrender-macos](https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/mdrender-macos)
+            - **Windows**: [mdrender-win.exe](https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/mdrender-win.exe)
+            
+            ### Usage
+            ```bash
+            # Make executable (Linux/macOS)
+            chmod +x mdrender-linux
+            ./mdrender-linux README.md
+            
+            # Windows
+            mdrender-win.exe README.md
+            ```
+            
+            ### What's Changed
+            - Standalone binaries for all platforms
+            - No Node.js installation required
+            - GitHub-like markdown rendering
+            - Syntax highlighting support
+          draft: false
+          prerelease: false
+
+      - name: Upload Linux Binary
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./artifacts/mdrender-linux/mdrender-linux
+          asset_name: mdrender-linux
+          asset_content_type: application/octet-stream
+
+      - name: Upload macOS Binary
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./artifacts/mdrender-macos/mdrender-macos
+          asset_name: mdrender-macos
+          asset_content_type: application/octet-stream
+
+      - name: Upload Windows Binary
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./artifacts/mdrender-win.exe/mdrender-win.exe
+          asset_name: mdrender-win.exe
+          asset_content_type: application/octet-stream

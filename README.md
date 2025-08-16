@@ -10,16 +10,36 @@ A lightweight command-line tool that converts Markdown files to HTML and opens t
 - ✅ Auto-opens in your default browser
 - ✅ Cross-platform support (macOS, Linux, Windows)
 - ✅ Temporary file cleanup
+- ✅ Standalone binaries available (no Node.js required)
 
 ## Installation
 
-### Prerequisites
+### Option 1: Download Standalone Binary (Recommended)
+
+No Node.js required! Download the binary for your platform:
+
+- **macOS**: `mdrender-macos`
+- **Linux**: `mdrender-linux` 
+- **Windows**: `mdrender-win.exe`
+
+Make it executable and run:
+```bash
+# macOS/Linux
+chmod +x mdrender-macos
+./mdrender-macos README.md
+
+# Windows
+mdrender-win.exe README.md
+```
+
+### Option 2: Install from Source
+
+**Prerequisites:**
 - Node.js (v14 or higher)
 - npm
 
-### Install
-
-1. Clone or download this project:
+**Steps:**
+1. Clone this project:
 ```bash
 git clone <repository-url>
 cd MdRender
@@ -30,12 +50,24 @@ cd MdRender
 npm install
 ```
 
-3. Install globally (optional but recommended):
+3. Install globally (optional):
 ```bash
 npm link
 ```
 
-This makes `mdrender` available as a global command from anywhere on your system.
+### Building Binaries
+
+To create standalone binaries yourself:
+
+```bash
+# Build for current platform
+npm run build
+
+# Build for all platforms (macOS, Linux, Windows)
+npm run build:all
+```
+
+Binaries will be created in the `dist/` directory.
 
 ## Usage
 
