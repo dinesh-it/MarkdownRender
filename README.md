@@ -22,9 +22,11 @@ A lightweight command-line tool that converts Markdown files to HTML and opens t
 
 No Node.js required! Download the binary for your platform:
 
-- **macOS**: `mdrender-macos`
-- **Linux**: `mdrender-linux` 
-- **Windows**: `mdrender-win.exe`
+📥 **[Download Latest Release](https://github.com/USER/REPO/releases/latest)**
+
+- **macOS**: [mdrender-macos](https://github.com/USER/REPO/releases/latest/download/mdrender-macos)
+- **Linux**: [mdrender-linux](https://github.com/USER/REPO/releases/latest/download/mdrender-linux) 
+- **Windows**: [mdrender-win.exe](https://github.com/USER/REPO/releases/latest/download/mdrender-win.exe)
 
 Make it executable and run:
 ```bash
